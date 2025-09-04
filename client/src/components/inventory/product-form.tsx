@@ -109,13 +109,11 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     
+    // The validation schema will handle type coercion automatically
     const productData = {
       ...data,
-      // Keep as strings for database validation
-      price: data.price,
       cost: data.cost || undefined,
-      stock: data.stock,
-      minStock: data.minStock || '5',
+      minStock: data.minStock || undefined,
     };
 
     if (product) {

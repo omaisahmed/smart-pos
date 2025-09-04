@@ -159,17 +159,24 @@ export const inventoryMovementsRelations = relations(inventoryMovements, ({ one 
   }),
 }));
 
-// Insert schemas
+// Insert schemas with proper type coercion
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  price: z.coerce.number().positive(),
+  cost: z.coerce.number().positive().optional(),
+  stock: z.coerce.number().int().min(0),
+  minStock: z.coerce.number().int().min(0).optional(),
 });
 
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  creditBalance: z.coerce.number().min(0).optional(),
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({

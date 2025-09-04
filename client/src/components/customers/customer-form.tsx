@@ -86,10 +86,10 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     
+    // The validation schema will handle type coercion automatically
     const customerData = {
       ...data,
-      // Keep as string for database validation
-      creditBalance: data.creditBalance || '0',
+      creditBalance: data.creditBalance || undefined,
     };
 
     if (customer) {
