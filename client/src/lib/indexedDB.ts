@@ -98,7 +98,7 @@ class IndexedDBService {
     if (!this.db) throw new Error('Database not initialized');
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['products'], 'readonly');
+      const transaction = this.db!.transaction(['products'], 'readonly');
       const store = transaction.objectStore('products');
       const request = store.getAll();
 
@@ -111,7 +111,7 @@ class IndexedDBService {
     if (!this.db) throw new Error('Database not initialized');
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['products'], 'readonly');
+      const transaction = this.db!.transaction(['products'], 'readonly');
       const store = transaction.objectStore('products');
       const request = store.get(id);
 
@@ -151,7 +151,7 @@ class IndexedDBService {
     if (!this.db) throw new Error('Database not initialized');
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['customers'], 'readonly');
+      const transaction = this.db!.transaction(['customers'], 'readonly');
       const store = transaction.objectStore('customers');
       const request = store.getAll();
 
@@ -188,7 +188,7 @@ class IndexedDBService {
     if (!this.db) throw new Error('Database not initialized');
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['cart'], 'readonly');
+      const transaction = this.db!.transaction(['cart'], 'readonly');
       const store = transaction.objectStore('cart');
       const request = store.getAll();
 
@@ -201,7 +201,7 @@ class IndexedDBService {
     if (!this.db) throw new Error('Database not initialized');
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['cart'], 'readwrite');
+      const transaction = this.db!.transaction(['cart'], 'readwrite');
       const store = transaction.objectStore('cart');
       const request = store.clear();
 
@@ -239,7 +239,7 @@ class IndexedDBService {
     if (!this.db) throw new Error('Database not initialized');
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['transactions'], 'readonly');
+      const transaction = this.db!.transaction(['transactions'], 'readonly');
       const store = transaction.objectStore('transactions');
       const index = store.index('createdAt');
       const request = index.getAll();
@@ -266,7 +266,7 @@ class IndexedDBService {
     };
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['pendingSync'], 'readwrite');
+      const transaction = this.db!.transaction(['pendingSync'], 'readwrite');
       const store = transaction.objectStore('pendingSync');
       const request = store.put(syncItem);
 
@@ -279,7 +279,7 @@ class IndexedDBService {
     if (!this.db) throw new Error('Database not initialized');
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['pendingSync'], 'readonly');
+      const transaction = this.db!.transaction(['pendingSync'], 'readonly');
       const store = transaction.objectStore('pendingSync');
       const index = store.index('timestamp');
       const request = index.getAll();
@@ -293,7 +293,7 @@ class IndexedDBService {
     if (!this.db) throw new Error('Database not initialized');
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(['pendingSync'], 'readwrite');
+      const transaction = this.db!.transaction(['pendingSync'], 'readwrite');
       const store = transaction.objectStore('pendingSync');
       const request = store.delete(id);
 

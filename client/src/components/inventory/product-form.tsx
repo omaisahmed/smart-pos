@@ -50,15 +50,15 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: product?.name || '',
-      description: product?.description || '',
+      description: product?.description ?? '',
       sku: product?.sku || '',
-      barcode: product?.barcode || '',
+      barcode: product?.barcode ?? '',
       category: product?.category || '',
       price: product?.price?.toString() || '',
       cost: product?.cost?.toString() || '',
       stock: product?.stock?.toString() || '0',
       minStock: product?.minStock?.toString() || '5',
-      imageUrl: product?.imageUrl || '',
+      imageUrl: product?.imageUrl ?? '',
     },
   });
 
@@ -176,6 +176,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                   <Input
                     placeholder="Enter barcode"
                     {...field}
+                    value={field.value ?? ''}
                     data-testid="input-product-barcode"
                   />
                 </FormControl>
@@ -298,6 +299,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                 <Textarea
                   placeholder="Enter product description"
                   {...field}
+                  value={field.value ?? ''}
                   data-testid="textarea-product-description"
                 />
               </FormControl>
@@ -317,6 +319,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                   type="url"
                   placeholder="https://example.com/image.jpg"
                   {...field}
+                  value={field.value ?? ''}
                   data-testid="input-product-image-url"
                 />
               </FormControl>

@@ -32,9 +32,9 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: customer?.name || '',
-      email: customer?.email || '',
-      phone: customer?.phone || '',
-      address: customer?.address || '',
+      email: customer?.email ?? '',
+      phone: customer?.phone ?? '',
+      address: customer?.address ?? '',
       creditBalance: customer?.creditBalance?.toString() || '0',
     },
   });
@@ -132,6 +132,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                   <Input
                     placeholder="+92-300-1234567"
                     {...field}
+                    value={field.value ?? ''}
                     data-testid="input-customer-phone"
                   />
                 </FormControl>
@@ -151,6 +152,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     type="email"
                     placeholder="customer@example.com"
                     {...field}
+                    value={field.value ?? ''}
                     data-testid="input-customer-email"
                   />
                 </FormControl>
@@ -190,6 +192,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                 <Textarea
                   placeholder="Enter customer address"
                   {...field}
+                  value={field.value ?? ''}
                   data-testid="textarea-customer-address"
                 />
               </FormControl>

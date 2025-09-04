@@ -73,7 +73,7 @@ export default function POS() {
       transaction: {
         id: crypto.randomUUID(),
         transactionNumber: `TXN-${Date.now()}`,
-        customerId,
+        customerId: customerId || null,
         userId: 'current-user',
         subtotal: cartItems.reduce((sum, item) => sum + item.totalPrice, 0).toString(),
         tax: (cartItems.reduce((sum, item) => sum + item.totalPrice, 0) * 0.17).toString(),
