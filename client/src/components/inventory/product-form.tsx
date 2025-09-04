@@ -111,10 +111,11 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     
     const productData = {
       ...data,
-      price: parseFloat(data.price),
-      cost: data.cost ? parseFloat(data.cost) : undefined,
-      stock: parseInt(data.stock),
-      minStock: data.minStock ? parseInt(data.minStock) : 5,
+      // Keep as strings for database validation
+      price: data.price,
+      cost: data.cost || undefined,
+      stock: data.stock,
+      minStock: data.minStock || '5',
     };
 
     if (product) {

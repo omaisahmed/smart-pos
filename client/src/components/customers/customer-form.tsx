@@ -88,7 +88,8 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
     
     const customerData = {
       ...data,
-      creditBalance: data.creditBalance ? parseFloat(data.creditBalance) : 0,
+      // Keep as string for database validation
+      creditBalance: data.creditBalance || '0',
     };
 
     if (customer) {
