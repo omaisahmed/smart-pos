@@ -7,26 +7,31 @@ export function useOfflineSync() {
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
-    // Initialize IndexedDB
-    indexedDBService.init().catch(console.error);
+    let interval: NodeJS.Timeout | undefined;
+    let isMounted = true;
 
-    // Update connection status periodically
-    const interval = setInterval(() => {
-      const status = syncService.getConnectionStatus();
-      setConnectionStatus(status);
-      
-      // Update pending sync count
-      indexedDBService.getPendingSync().then(items => {
-        setPendingCount(items.length);
-      }).catch(console.error);
-    }, 1000);
+    indexedDBService.init()
+      .then(() => {
+        if (!isMounted) return;
+        interval = setInterval(() => {
+          const status = syncService.getConnectionStatus();
+          setConnectionStatus(status);
+          indexedDBService.getPendingSync().then(items => {
+            setPendingCount(items.length);
+          }).catch(console.error);
+        }, 1000);
+      })
+      .catch(console.error);
 
     // Download latest data when online
     if (navigator.onLine) {
       syncService.downloadLatestData().catch(console.error);
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
   const forcSync = async () => {

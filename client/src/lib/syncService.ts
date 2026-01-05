@@ -26,10 +26,18 @@ class SyncService {
   async syncPendingData(): Promise<void> {
     if (!this.isOnline || this.syncInProgress) return;
 
+    // Don't attempt to sync if IndexedDB isn't initialized yet
+    try {
+      if (!indexedDBService.isInitialized()) return;
+    } catch (err) {
+      // defensive: if checking initialization fails, bail
+      return;
+    }
+
     this.syncInProgress = true;
     
     try {
-      const pendingItems = await indexedDBService.getPendingSync();
+  const pendingItems = await indexedDBService.getPendingSync();
       
       for (const item of pendingItems) {
         try {

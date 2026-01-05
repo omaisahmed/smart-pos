@@ -6,17 +6,41 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { apiRequest } from '@/lib/queryClient';
+import { useQueryClient } from '@tanstack/react-query';
 import { Settings as SettingsIcon, User, Bell, Shield, Printer } from 'lucide-react';
 
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleSave = () => {
-    toast({
-      title: 'Settings Saved',
-      description: 'Your settings have been updated successfully.',
-    });
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    setFirstName(user?.firstName || '');
+    setLastName(user?.lastName || '');
+    setEmail(user?.email || '');
+  }, [user]);
+
+  const handleSave = async () => {
+    try {
+      await apiRequest('PUT', '/api/auth/user', { firstName, lastName, email });
+      // refresh auth info
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: 'Settings Saved',
+        description: 'Your profile has been updated successfully.',
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Failed to save',
+        description: err?.message || 'An error occurred while updating profile.',
+      });
+    }
   };
 
   const handleLogout = () => {
@@ -44,7 +68,8 @@ export default function Settings() {
               <Label htmlFor="firstName">First Name</Label>
               <Input
                 id="firstName"
-                defaultValue={user?.firstName || ''}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 data-testid="input-first-name"
               />
             </div>
@@ -52,7 +77,8 @@ export default function Settings() {
               <Label htmlFor="lastName">Last Name</Label>
               <Input
                 id="lastName"
-                defaultValue={user?.lastName || ''}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 data-testid="input-last-name"
               />
             </div>
@@ -61,7 +87,8 @@ export default function Settings() {
               <Input
                 id="email"
                 type="email"
-                defaultValue={user?.email || ''}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 data-testid="input-email"
               />
             </div>

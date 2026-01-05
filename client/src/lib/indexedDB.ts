@@ -78,6 +78,10 @@ class IndexedDBService {
     });
   }
 
+  isInitialized(): boolean {
+    return this.db !== null;
+  }
+
   // Product operations
   async saveProducts(products: Product[]): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');

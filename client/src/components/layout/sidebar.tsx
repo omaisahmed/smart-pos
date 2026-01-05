@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Point of Sale', href: '/', icon: ShoppingCart },
+  // expose POS under /pos as well to avoid confusion when users expect a dedicated route
+  { name: 'Point of Sale', href: '/pos', icon: ShoppingCart },
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
   { name: 'Inventory', href: '/inventory', icon: Package },
   { name: 'Customers', href: '/customers', icon: Users },

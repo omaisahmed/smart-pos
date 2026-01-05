@@ -30,8 +30,6 @@ The application features a modular page structure:
 ### Backend Architecture
 The server is built with Express.js and follows a clean architecture pattern:
 - **API Layer**: RESTful endpoints organized by feature domains (products, customers, transactions)
-- **Authentication**: Replit Auth integration with OpenID Connect for secure user authentication
-- **Session Management**: PostgreSQL-backed session storage using connect-pg-simple
 - **Data Access**: Centralized storage layer with interface-based design for testability
 - **Database ORM**: Drizzle ORM with TypeScript-first schema definitions
 
@@ -50,10 +48,6 @@ Key database entities include:
 - Inventory movements for stock tracking and auditing
 
 ### Authentication and Authorization
-- **Identity Provider**: Replit Auth with OpenID Connect integration
-- **Session Management**: Secure HTTP-only cookies with PostgreSQL persistence
-- **Role-based Access**: User roles controlling feature access and permissions
-- **Route Protection**: Middleware-based authentication checks on API endpoints
 
 ### Offline-First Design
 The system implements a robust offline synchronization strategy:
@@ -70,7 +64,6 @@ The system implements a robust offline synchronization strategy:
 - **Drizzle ORM**: Type-safe database operations with migration support
 
 ### Authentication Services
-- **Replit Auth**: OpenID Connect provider for user authentication and profile management
 
 ### Development and Build Tools
 - **Vite**: Frontend build tool with hot module replacement and optimized bundling
@@ -83,7 +76,6 @@ The system implements a robust offline synchronization strategy:
 - **Lucide Icons**: Consistent icon library for UI elements
 
 ### Monitoring and Development
-- **Replit Runtime**: Development environment integration with error overlay and cartographer
 - **Browser APIs**: IndexedDB for offline storage, Service Worker support for background sync
 
 The architecture prioritizes reliability and user experience by ensuring the POS system remains functional during network outages while providing seamless synchronization when connectivity is restored.

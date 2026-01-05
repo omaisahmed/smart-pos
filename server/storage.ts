@@ -25,6 +25,7 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUser(id: string, userData: Partial<UpsertUser>): Promise<User>;
 
   // Product operations
   getProducts(): Promise<Product[]>;
@@ -65,6 +66,10 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -75,8 +80,12 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .insert(users)
       .values(userData)
+      // handle conflicts on email as well as id; if an existing user with the same
+      // email already exists, update that row instead of throwing a unique constraint error
       .onConflictDoUpdate({
-        target: users.id,
+        // use the unique email constraint as the conflict target so registering
+        // with an existing email will update the existing user (if desired)
+        target: users.email,
         set: {
           ...userData,
           updatedAt: new Date(),
@@ -84,6 +93,17 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // update user by id
+  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
+    const updateData: any = { ...userData, updatedAt: new Date() };
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
   }
 
   // Product operations
@@ -107,14 +127,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
-    const [newProduct] = await db.insert(products).values(product).returning();
+    const [newProduct] = await db.insert(products).values({
+      ...product,
+      // price is required by the insert schema; coerce to string for the decimal column
+      price: String(product.price),
+      cost: product.cost !== undefined ? String(product.cost) : undefined,
+    }).returning();
     return newProduct;
   }
 
   async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product> {
+    // Convert decimal fields to string if present
+    const updateData: any = { ...product, updatedAt: new Date() };
+    if (updateData.price !== undefined) updateData.price = String(updateData.price);
+    if (updateData.cost !== undefined) updateData.cost = String(updateData.cost);
     const [updatedProduct] = await db
       .update(products)
-      .set({ ...product, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(products.id, id))
       .returning();
     return updatedProduct;
@@ -180,14 +209,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    const [newCustomer] = await db.insert(customers).values(customer).returning();
+    const [newCustomer] = await db.insert(customers).values({
+      ...customer,
+      creditBalance: customer.creditBalance !== undefined ? String(customer.creditBalance) : undefined,
+      totalPurchases: customer.totalPurchases !== undefined ? String(customer.totalPurchases) : undefined,
+    }).returning();
     return newCustomer;
   }
 
   async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer> {
+    // Convert decimal fields to string if present
+    const updateData: any = { ...customer, updatedAt: new Date() };
+    if (updateData.creditBalance !== undefined) updateData.creditBalance = String(updateData.creditBalance);
+    if (updateData.totalPurchases !== undefined) updateData.totalPurchases = String(updateData.totalPurchases);
     const [updatedCustomer] = await db
       .update(customers)
-      .set({ ...customer, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(customers.id, id))
       .returning();
     return updatedCustomer;

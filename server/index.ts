@@ -1,5 +1,9 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { storage } from "./storage";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
@@ -42,9 +46,15 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+    // In development, include stack for easier debugging in the browser
+    if (app.get('env') === 'development') {
+      res.status(status).json({ message, stack: err.stack });
+    } else {
+      res.status(status).json({ message });
+    }
+    // still log the error to the console
+    console.error(err);
+    // don't rethrow here to avoid crashing the process in dev when handling errors
   });
 
   // importantly only setup vite in development and after
@@ -56,14 +66,37 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
+  // create built-in admin user if missing
+  try {
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@admin.com';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+    const existing = await storage.getUserByEmail(ADMIN_EMAIL);
+    if (!existing) {
+      const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+      await storage.upsertUser({
+        id: crypto.randomUUID(),
+        email: ADMIN_EMAIL,
+        password: hash,
+        firstName: 'Admin',
+        lastName: '',
+        role: 'admin',
+      });
+      log(`created built-in admin user ${ADMIN_EMAIL}`);
+    }
+  } catch (err) {
+    // don't crash startup for admin creation failures, just log
+    console.error('Failed to ensure admin user:', err);
+  }
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  // bind to IPv6 unspecified address to accept both IPv6 and IPv4 connections
   server.listen({
     port,
-    host: "0.0.0.0",
+    host: "::",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
