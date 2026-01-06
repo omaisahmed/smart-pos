@@ -43,8 +43,8 @@ export default function ReceiptModal({ receiptData, isOpen, onClose }: ReceiptMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md no-print">
-        <DialogHeader>
+      <DialogContent className="max-w-md">
+        <DialogHeader className="no-print">
           <div className="flex justify-between items-center">
             <DialogTitle>Receipt Preview</DialogTitle>
             <Button
@@ -168,8 +168,8 @@ export default function ReceiptModal({ receiptData, isOpen, onClose }: ReceiptMo
           </div>
         </div>
         
-        {/* Action Buttons */}
-        <div className="flex space-x-3 no-print">
+  {/* Action Buttons */}
+  <div className="flex space-x-3 no-print">
           <Button
             onClick={handlePrint}
             className="flex-1"

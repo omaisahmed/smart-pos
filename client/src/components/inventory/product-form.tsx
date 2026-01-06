@@ -41,10 +41,17 @@ const categories = [
   'Sports & Outdoors',
 ];
 
+
 export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // If editing a product that has a category not in the default list,
+  // include it so the select shows the current value.
+  const categoryOptions = product?.category && !categories.includes(product.category)
+    ? [product.category, ...categories]
+    : categories;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -108,21 +115,57 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    
-    // The validation schema will handle type coercion automatically
+
+    // The form keeps numeric fields as strings; convert them to numbers
     const productData = {
       ...data,
       cost: data.cost || undefined,
       minStock: data.minStock || undefined,
-    };
+    } as any;
 
-    if (product) {
-      updateProductMutation.mutate(productData);
-    } else {
-      createProductMutation.mutate(productData);
+    // coerce numeric strings to numbers expected by the server schema
+    if (productData.price !== undefined && productData.price !== '') {
+      productData.price = Number(productData.price);
     }
-    
-    setIsSubmitting(false);
+    if (productData.cost !== undefined && productData.cost !== '') {
+      productData.cost = Number(productData.cost);
+    }
+    if (productData.stock !== undefined && productData.stock !== '') {
+      productData.stock = Number(productData.stock);
+    }
+    if (productData.minStock !== undefined && productData.minStock !== '') {
+      productData.minStock = Number(productData.minStock);
+    }
+
+    // Remove empty-string fields so the server's partial() parse doesn't receive invalid empties
+    Object.keys(productData).forEach((key) => {
+      const val = (productData as any)[key];
+      if (val === '' || val === null || val === undefined) {
+        delete (productData as any)[key];
+      }
+    });
+
+    // Log payload for debugging (inspect Network tab)
+    // eslint-disable-next-line no-console
+    console.debug('Product payload to send:', productData);
+
+    try {
+      if (product) {
+        await updateProductMutation.mutateAsync(productData);
+      } else {
+        await createProductMutation.mutateAsync(productData);
+      }
+      // onSuccess handlers attached to mutations will run and call onSuccess()
+    } catch (err: any) {
+      console.error('Product save error:', err);
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to save product',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -190,14 +233,14 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
                   <FormControl>
                     <SelectTrigger data-testid="select-product-category">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {categoryOptions.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
                       </SelectItem>

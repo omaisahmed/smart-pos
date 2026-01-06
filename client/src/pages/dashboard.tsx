@@ -2,6 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Receipt, AlertTriangle, Users } from 'lucide-react';
 import { DashboardMetrics, TransactionWithDetails } from '@/types/pos';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 
 export default function Dashboard() {
   const { data: metrics, isLoading: metricsLoading } = useQuery<DashboardMetrics>({
@@ -161,12 +170,64 @@ export default function Dashboard() {
             <CardTitle>Sales Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">Chart implementation coming soon</p>
+            <div className="h-64">
+              <SalesTrendChart />
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
+  );
+}
+
+function SalesTrendChart() {
+  // build last 7 days range
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 6);
+  // zero out times for API
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  const { data: sales = [], isLoading } = useQuery<TransactionWithDetails[]>({
+    queryKey: ['/api/reports/sales', { startDate: start.toISOString(), endDate: end.toISOString() }],
+  });
+
+  // aggregate totals per day
+  const dayMap: Record<string, number> = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    dayMap[key] = 0;
+  }
+
+  (sales || []).forEach((tx) => {
+    const dkey = new Date(tx.createdAt as string).toISOString().slice(0, 10);
+    if (!dayMap[dkey]) dayMap[dkey] = 0;
+    dayMap[dkey] += Number(tx.total || 0);
+  });
+
+  const chartData = Object.keys(dayMap)
+    .sort()
+    .map((k) => ({ date: k, total: dayMap[k] }));
+
+  const formatLabel = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getDate()}/${d.getMonth() + 1}`;
+  };
+
+  if (isLoading) return <div className="h-64 flex items-center justify-center">Loading chart...</div>;
+
+  return (
+    <ResponsiveContainer width="100%" height={256}>
+      <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="date" tickFormatter={formatLabel} />
+        <YAxis />
+        <Tooltip formatter={(value: any) => [`Rs. ${Number(value).toLocaleString()}`, 'Sales']} labelFormatter={(label) => `Date: ${label}`} />
+        <Line type="monotone" dataKey="total" stroke="#4f46e5" strokeWidth={2} dot={{ r: 3 }} />
+      </LineChart>
+    </ResponsiveContainer>
   );
 }

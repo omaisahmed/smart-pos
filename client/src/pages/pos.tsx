@@ -94,7 +94,7 @@ export default function POS() {
           product: item.product
         }))
       },
-      storeName: 'SmartPOS Store',
+      storeName: 'Smart POS Store',
       storeAddress: '123 Main Street, Karachi',
       storePhone: '+92-300-1234567',
       gstNumber: '123456789',

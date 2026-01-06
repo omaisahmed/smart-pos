@@ -34,7 +34,7 @@ export default function Sidebar() {
             <ScanBarcode className="text-primary-foreground h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground" data-testid="text-app-title">SmartPOS</h1>
+            <h1 className="text-xl font-bold text-foreground" data-testid="text-app-title">Smart POS</h1>
             <p className="text-sm text-muted-foreground">Retail & Restaurant</p>
           </div>
         </div>

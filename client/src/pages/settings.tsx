@@ -19,12 +19,61 @@ export default function Settings() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  // Store settings
+  const [storeName, setStoreName] = useState('Smart POS Store');
+  const [storePhone, setStorePhone] = useState('+92-300-1234567');
+  const [storeAddress, setStoreAddress] = useState('123 Main Street, Karachi');
+  const [gstNumber, setGstNumber] = useState('123456789');
+  const [taxRate, setTaxRate] = useState<number | ''>(17);
+
+  // Printer settings
+  const [printerName, setPrinterName] = useState('Thermal Printer');
+  const [paperWidth, setPaperWidth] = useState<number | ''>(80);
+  const [autoPrint, setAutoPrint] = useState(true);
+
+  // Notification settings
+  const [lowStockAlerts, setLowStockAlerts] = useState(true);
+  const [dailyReport, setDailyReport] = useState(true);
+  const [syncNotifications, setSyncNotifications] = useState(true);
 
   useEffect(() => {
     setFirstName(user?.firstName || '');
     setLastName(user?.lastName || '');
     setEmail(user?.email || '');
   }, [user]);
+
+  // Load persisted settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const store = localStorage.getItem('settings:store');
+      if (store) {
+        const s = JSON.parse(store);
+        setStoreName(s.storeName ?? storeName);
+        setStorePhone(s.storePhone ?? storePhone);
+        setStoreAddress(s.storeAddress ?? storeAddress);
+        setGstNumber(s.gstNumber ?? gstNumber);
+        setTaxRate(s.taxRate ?? taxRate);
+      }
+
+      const printer = localStorage.getItem('settings:printer');
+      if (printer) {
+        const p = JSON.parse(printer);
+        setPrinterName(p.printerName ?? printerName);
+        setPaperWidth(p.paperWidth ?? paperWidth);
+        setAutoPrint(p.autoPrint ?? autoPrint);
+      }
+
+      const notifications = localStorage.getItem('settings:notifications');
+      if (notifications) {
+        const n = JSON.parse(notifications);
+        setLowStockAlerts(n.lowStockAlerts ?? lowStockAlerts);
+        setDailyReport(n.dailyReport ?? dailyReport);
+        setSyncNotifications(n.syncNotifications ?? syncNotifications);
+      }
+    } catch (err) {
+      console.warn('Failed to load settings from localStorage', err);
+    }
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -40,6 +89,36 @@ export default function Settings() {
         title: 'Failed to save',
         description: err?.message || 'An error occurred while updating profile.',
       });
+    }
+  };
+
+  const saveStoreSettings = () => {
+    try {
+      const payload = { storeName, storePhone, storeAddress, gstNumber, taxRate };
+      localStorage.setItem('settings:store', JSON.stringify(payload));
+      toast({ title: 'Store settings saved', description: 'Store settings persisted locally.' });
+    } catch (err) {
+      toast({ title: 'Failed', description: 'Could not save store settings.' });
+    }
+  };
+
+  const savePrinterSettings = () => {
+    try {
+      const payload = { printerName, paperWidth, autoPrint };
+      localStorage.setItem('settings:printer', JSON.stringify(payload));
+      toast({ title: 'Printer settings saved', description: 'Printer settings persisted locally.' });
+    } catch (err) {
+      toast({ title: 'Failed', description: 'Could not save printer settings.' });
+    }
+  };
+
+  const saveNotificationSettings = () => {
+    try {
+      const payload = { lowStockAlerts, dailyReport, syncNotifications };
+      localStorage.setItem('settings:notifications', JSON.stringify(payload));
+      toast({ title: 'Notification settings saved', description: 'Notification settings persisted locally.' });
+    } catch (err) {
+      toast({ title: 'Failed', description: 'Could not save notification settings.' });
     }
   };
 
@@ -120,17 +199,19 @@ export default function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="storeName">Store Name</Label>
-              <Input
-                id="storeName"
-                defaultValue="SmartPOS Store"
-                data-testid="input-store-name"
-              />
+                <Input
+                  id="storeName"
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                  data-testid="input-store-name"
+                />
             </div>
             <div>
               <Label htmlFor="storePhone">Store Phone</Label>
               <Input
                 id="storePhone"
-                defaultValue="+92-300-1234567"
+                value={storePhone}
+                onChange={(e) => setStorePhone(e.target.value)}
                 data-testid="input-store-phone"
               />
             </div>
@@ -138,7 +219,8 @@ export default function Settings() {
               <Label htmlFor="storeAddress">Store Address</Label>
               <Input
                 id="storeAddress"
-                defaultValue="123 Main Street, Karachi"
+                value={storeAddress}
+                onChange={(e) => setStoreAddress(e.target.value)}
                 data-testid="input-store-address"
               />
             </div>
@@ -146,7 +228,8 @@ export default function Settings() {
               <Label htmlFor="gstNumber">GST Number</Label>
               <Input
                 id="gstNumber"
-                defaultValue="123456789"
+                value={gstNumber}
+                onChange={(e) => setGstNumber(e.target.value)}
                 data-testid="input-gst-number"
               />
             </div>
@@ -155,12 +238,13 @@ export default function Settings() {
               <Input
                 id="taxRate"
                 type="number"
-                defaultValue="17"
+                value={taxRate as number}
+                onChange={(e) => setTaxRate(e.target.value === '' ? '' : Number(e.target.value))}
                 data-testid="input-tax-rate"
               />
             </div>
           </div>
-          <Button onClick={handleSave} data-testid="button-save-store">
+          <Button onClick={saveStoreSettings} data-testid="button-save-store">
             Save Store Settings
           </Button>
         </CardContent>
@@ -180,7 +264,8 @@ export default function Settings() {
               <Label htmlFor="printerName">Printer Name</Label>
               <Input
                 id="printerName"
-                defaultValue="Thermal Printer"
+                value={printerName}
+                onChange={(e) => setPrinterName(e.target.value)}
                 data-testid="input-printer-name"
               />
             </div>
@@ -189,16 +274,17 @@ export default function Settings() {
               <Input
                 id="paperWidth"
                 type="number"
-                defaultValue="80"
+                value={paperWidth as number}
+                onChange={(e) => setPaperWidth(e.target.value === '' ? '' : Number(e.target.value))}
                 data-testid="input-paper-width"
               />
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Switch id="autoPrint" data-testid="switch-auto-print" />
+            <Switch id="autoPrint" checked={autoPrint} onCheckedChange={(v) => setAutoPrint(Boolean(v))} data-testid="switch-auto-print" />
             <Label htmlFor="autoPrint">Automatically print receipts</Label>
           </div>
-          <Button onClick={handleSave} data-testid="button-save-printer">
+          <Button onClick={savePrinterSettings} data-testid="button-save-printer">
             Save Printer Settings
           </Button>
         </CardContent>
@@ -215,19 +301,19 @@ export default function Settings() {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <Switch id="lowStock" defaultChecked data-testid="switch-low-stock" />
+              <Switch id="lowStock" checked={lowStockAlerts} onCheckedChange={(v) => setLowStockAlerts(Boolean(v))} data-testid="switch-low-stock" />
               <Label htmlFor="lowStock">Low stock alerts</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Switch id="dailyReport" defaultChecked data-testid="switch-daily-report" />
+              <Switch id="dailyReport" checked={dailyReport} onCheckedChange={(v) => setDailyReport(Boolean(v))} data-testid="switch-daily-report" />
               <Label htmlFor="dailyReport">Daily sales reports</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Switch id="syncNotifications" defaultChecked data-testid="switch-sync-notifications" />
+              <Switch id="syncNotifications" checked={syncNotifications} onCheckedChange={(v) => setSyncNotifications(Boolean(v))} data-testid="switch-sync-notifications" />
               <Label htmlFor="syncNotifications">Data sync notifications</Label>
             </div>
           </div>
-          <Button onClick={handleSave} data-testid="button-save-notifications">
+          <Button onClick={saveNotificationSettings} data-testid="button-save-notifications">
             Save Notification Settings
           </Button>
         </CardContent>
