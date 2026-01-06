@@ -8,18 +8,40 @@ interface ReceiptModalProps {
   receiptData: ReceiptData;
   isOpen: boolean;
   onClose: () => void;
+  onPrint?: () => void;
 }
 
-export default function ReceiptModal({ receiptData, isOpen, onClose }: ReceiptModalProps) {
+export default function ReceiptModal({ receiptData, isOpen, onClose, onPrint }: ReceiptModalProps) {
   const { transaction, storeName, storeAddress, storePhone, gstNumber, cashierName } = receiptData;
 
   const handlePrint = () => {
     window.print();
+    onPrint?.();
   };
 
   const handleEmail = () => {
-    // Implementation for email receipt
-    console.log('Email receipt functionality to be implemented');
+    // Build a simple receipt text and open the user's mail client via mailto
+    try {
+      const subject = `Receipt ${transaction.transactionNumber} - ${storeName}`;
+      let body = `Store: ${storeName}\n`;
+      if (storeAddress) body += `Address: ${storeAddress}\n`;
+      if (storePhone) body += `Phone: ${storePhone}\n`;
+      body += `\nReceipt: ${transaction.transactionNumber}\n`;
+      body += `Date: ${formatDate(transaction.createdAt!)} ${formatTime(transaction.createdAt!)}\n`;
+      body += `Cashier: ${cashierName}\n\nItems:\n`;
+      transaction.items.forEach((it) => {
+        body += `${it.product.name}  x${it.quantity}  Rs. ${Number(it.totalPrice).toLocaleString()}\n`;
+      });
+      body += `\nSubtotal: Rs. ${Number(transaction.subtotal).toLocaleString()}\n`;
+      body += `Tax: Rs. ${Number(transaction.tax).toLocaleString()}\n`;
+      body += `TOTAL: Rs. ${Number(transaction.total).toLocaleString()}\n\n`;
+      body += 'Thank you for your business!';
+
+      const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(mailto, '_blank');
+    } catch (err) {
+      console.error('Failed to open mail client', err);
+    }
   };
 
   const formatDate = (date: Date | string) => {
@@ -45,17 +67,7 @@ export default function ReceiptModal({ receiptData, isOpen, onClose }: ReceiptMo
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader className="no-print">
-          <div className="flex justify-between items-center">
-            <DialogTitle>Receipt Preview</DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              data-testid="button-close-receipt"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>Receipt Preview</DialogTitle>
         </DialogHeader>
         
         {/* Receipt Content */}
@@ -171,6 +183,7 @@ export default function ReceiptModal({ receiptData, isOpen, onClose }: ReceiptMo
   {/* Action Buttons */}
   <div className="flex space-x-3 no-print">
           <Button
+            type="button"
             onClick={handlePrint}
             className="flex-1"
             data-testid="button-print-receipt"
@@ -178,13 +191,15 @@ export default function ReceiptModal({ receiptData, isOpen, onClose }: ReceiptMo
             <Printer className="h-4 w-4 mr-2" />
             Print Receipt
           </Button>
-          <Button
+          {/* <Button
+            type="button"
             variant="outline"
             onClick={handleEmail}
             data-testid="button-email-receipt"
+            aria-label="Email receipt"
           >
             <Mail className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
       </DialogContent>
     </Dialog>

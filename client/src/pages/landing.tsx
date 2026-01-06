@@ -83,7 +83,7 @@ export default function Landing() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Inventory, customers, reports, and payment integration all in one
+                Inventory, customers, reports, and more - all in one easy to use POS system
               </CardDescription>
             </CardContent>
           </Card>
@@ -109,8 +109,16 @@ export default function Landing() {
               </li>
               <li className="flex items-start space-x-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-0.5" />
-                <span className="text-muted-foreground">JazzCash and EasyPaisa integration</span>
+                <span className="text-muted-foreground">Clothing and retail shops</span>
               </li>
+              <li className="flex items-start space-x-3">
+                <CheckCircle className="h-6 w-6 text-green-500 mt-0.5" />
+                <span className="text-muted-foreground">Pharmacies and medical stores</span>
+              </li>
+              {/* <li className="flex items-start space-x-3">
+                <CheckCircle className="h-6 w-6 text-green-500 mt-0.5" />
+                <span className="text-muted-foreground">JazzCash and EasyPaisa integration</span>
+              </li> */}
             </ul>
           </div>
           
@@ -124,7 +132,7 @@ export default function Landing() {
               <li>• Offline-first with automatic sync</li>
               <li>• Daily sales and profit/loss reports</li>
               <li>• Thermal printer support</li>
-              <li>• Local payment gateway integration</li>
+              <li>• User-friendly interface</li>
             </ul>
           </div>
         </div>

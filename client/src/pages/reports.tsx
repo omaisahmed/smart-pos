@@ -140,7 +140,7 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>Transaction ID</TableHead>
                   <TableHead>Date & Time</TableHead>
-                  <TableHead>Payment Method</TableHead>
+                  {/* <TableHead>Payment Method</TableHead> */}
                   <TableHead>Subtotal</TableHead>
                   <TableHead>Tax</TableHead>
                   <TableHead>Total</TableHead>
@@ -155,9 +155,9 @@ export default function Reports() {
                     <TableCell>
                       {new Date(transaction.createdAt!).toLocaleString()}
                     </TableCell>
-                    <TableCell className="capitalize">
+                    {/* <TableCell className="capitalize">
                       {transaction.paymentMethod}
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
                       Rs. {Number(transaction.subtotal).toLocaleString()}
                     </TableCell>

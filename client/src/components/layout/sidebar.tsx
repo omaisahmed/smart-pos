@@ -10,16 +10,17 @@ import {
   FileText,
   Settings,
   ScanBarcode
+  ,LogOut
 } from 'lucide-react';
 
 const navigation = [
   // expose POS under /pos as well to avoid confusion when users expect a dedicated route
-  { name: 'Point of Sale', href: '/pos', icon: ShoppingCart },
-  { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-  { name: 'Inventory', href: '/inventory', icon: Package },
-  { name: 'Customers', href: '/customers', icon: Users },
-  { name: 'Reports', href: '/reports', icon: FileText },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Point of Sale', href: '/pos', icon: ShoppingCart, roles: ['admin', 'manager', 'cashier'] },
+  { name: 'Dashboard', href: '/dashboard', icon: BarChart3, roles: ['admin', 'manager'] },
+  { name: 'Inventory', href: '/inventory', icon: Package, roles: ['admin', 'manager', 'cashier'] },
+  { name: 'Customers', href: '/customers', icon: Users, roles: ['admin', 'manager', 'cashier'] },
+  { name: 'Reports', href: '/reports', icon: FileText, roles: ['admin', 'manager'] },
+  { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin'] },
 ];
 
 export default function Sidebar() {
@@ -42,7 +43,13 @@ export default function Sidebar() {
         <ConnectionStatus />
         
         <nav className="space-y-2 mt-6">
-          {navigation.map((item) => {
+          {navigation
+            .filter((item) => {
+              // show item when no roles specified or when user's role is included
+              const role = user?.role || 'cashier';
+              return !item.roles || item.roles.includes(role);
+            })
+            .map((item) => {
             const isActive = location === item.href;
             const Icon = item.icon;
             
@@ -63,6 +70,18 @@ export default function Sidebar() {
               </button>
             );
           })}
+          {/* Logout visible to all roles */}
+          <button
+            onClick={() => (window.location.href = '/api/logout')}
+            className={cn(
+              'w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors',
+              'hover:bg-accent hover:text-accent-foreground'
+            )}
+            data-testid="nav-logout"
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </button>
         </nav>
       </div>
       

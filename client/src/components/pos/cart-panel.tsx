@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Minus, Plus, Trash2, ScanBarcode, Pause, RotateCcw } from 'lucide-react';
 import { CartItem, CartSummary, PaymentMethod } from '@/types/pos';
 import { Customer } from '@shared/schema';
+import HeldSalesModal from './held-sales-modal';
 
 interface CartPanelProps {
   items: CartItem[];
@@ -13,6 +15,11 @@ interface CartPanelProps {
   onRemoveItem: (itemId: string) => void;
   onClearCart: () => void;
   onProcessPayment: (paymentMethod: string, customerId?: string) => void;
+  onRestoreHeldSale: (heldSale: any) => void;
+  selectedCustomer: string;
+  selectedPaymentMethod: string;
+  onSelectedCustomerChange: (value: string) => void;
+  onSelectedPaymentMethodChange: (value: string) => void;
 }
 
 const paymentMethods: PaymentMethod[] = [
@@ -27,14 +34,32 @@ export default function CartPanel({
   onUpdateItem,
   onRemoveItem,
   onClearCart,
-  onProcessPayment
+  onProcessPayment,
+  onRestoreHeldSale,
+  selectedCustomer,
+  selectedPaymentMethod,
+  onSelectedCustomerChange,
+  onSelectedPaymentMethodChange
 }: CartPanelProps) {
-  const [selectedCustomer, setSelectedCustomer] = useState<string>('');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('cash');
+  const { toast } = useToast();
 
   const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: ['/api/customers'],
   });
+
+  const [heldSales, setHeldSales] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadHeldSales = () => {
+      try {
+        const held = JSON.parse(localStorage.getItem('held:sales') || '[]');
+        setHeldSales(held);
+      } catch (err) {
+        console.error('Failed to load held sales', err);
+      }
+    };
+    loadHeldSales();
+  }, []);
 
   const cartSummary: CartSummary = {
     subtotal: items.reduce((sum, item) => sum + item.totalPrice, 0),
@@ -70,7 +95,7 @@ export default function CartPanel({
       {/* Customer Selection */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-foreground mb-2">Customer</label>
-        <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+        <Select value={selectedCustomer} onValueChange={onSelectedCustomerChange}>
           <SelectTrigger data-testid="select-customer">
             <SelectValue placeholder="Walk-in Customer" />
           </SelectTrigger>
@@ -165,7 +190,7 @@ export default function CartPanel({
       </div>
       
       {/* Payment Methods */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <h4 className="font-semibold mb-3">Payment Method</h4>
         <div className="grid grid-cols-2 gap-2">
           {paymentMethods.map((method) => (
@@ -182,7 +207,7 @@ export default function CartPanel({
             </Button>
           ))}
         </div>
-      </div>
+      </div> */}
       
       {/* Action Buttons */}
       <div className="space-y-3">
@@ -197,8 +222,33 @@ export default function CartPanel({
         </Button>
         <div className="grid grid-cols-2 gap-3">
           <Button
+            type="button"
             variant="outline"
-            onClick={() => {}}
+            onClick={() => {
+              if (items.length === 0) {
+                toast({ title: 'Nothing to hold', description: 'Cart is empty', variant: 'destructive' });
+                return;
+              }
+
+              try {
+                const held = JSON.parse(localStorage.getItem('held:sales') || '[]');
+                const newHeld = {
+                  id: `held-${Date.now()}`,
+                  createdAt: new Date().toISOString(),
+                  items,
+                  customerId: selectedCustomer || null,
+                  paymentMethod: selectedPaymentMethod,
+                };
+                held.push(newHeld);
+                localStorage.setItem('held:sales', JSON.stringify(held));
+                setHeldSales([...held]);
+                onClearCart();
+                toast({ title: 'Sale held', description: 'Sale saved for later.' });
+              } catch (err) {
+                console.error('Failed to hold sale', err);
+                toast({ title: 'Hold failed', description: 'Could not save held sale', variant: 'destructive' });
+              }
+            }}
             data-testid="button-hold-sale"
           >
             <Pause className="h-4 w-4 mr-1" />
@@ -215,6 +265,7 @@ export default function CartPanel({
             Clear
           </Button>
         </div>
+        <HeldSalesModal onRestore={onRestoreHeldSale} heldSales={heldSales} onUpdate={() => setHeldSales(JSON.parse(localStorage.getItem('held:sales') || '[]'))} />
       </div>
     </div>
   );
