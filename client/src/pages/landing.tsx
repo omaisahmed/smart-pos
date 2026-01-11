@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Shield, Zap, Globe } from "lucide-react";
+import { CheckCircle, Shield, Zap, Globe, ScanBarcode } from "lucide-react";
 
 export default function Landing() {
   const [, navigate] = useLocation();
@@ -10,8 +10,8 @@ export default function Landing() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-primary rounded-lg flex items-center justify-center">
-              <i className="fas fa-cash-register text-primary-foreground text-2xl"></i>
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+              <ScanBarcode className="text-primary-foreground h-7 w-7" />
             </div>
           </div>
           <h1 className="text-5xl font-bold text-foreground mb-6">
