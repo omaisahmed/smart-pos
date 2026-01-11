@@ -393,6 +393,13 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
+    // Get total transactions count (all time, not just today)
+    const [allTransactionsData] = await db
+      .select({
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(transactions);
+
     const lowStockProducts = await this.getLowStockProducts();
     
     const [customerData] = await db
@@ -401,7 +408,7 @@ export class DatabaseStorage implements IStorage {
 
     return {
       todaySales: Number(salesData?.totalSales || 0),
-      totalTransactions: Number(salesData?.transactionCount || 0),
+      totalTransactions: Number(allTransactionsData?.count || 0),
       lowStockItems: lowStockProducts.length,
       activeCustomers: Number(customerData?.count || 0),
     };

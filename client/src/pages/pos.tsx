@@ -4,7 +4,7 @@ import CartPanel from '@/components/pos/cart-panel';
 import ReceiptModal from '@/components/pos/receipt-modal';
 import { CartItem, ReceiptData } from '@/types/pos';
 import { Product } from '@shared/schema';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 export default function POS() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -107,6 +107,11 @@ export default function POS() {
         credentials: 'include',
       });
       const fullTransaction = await fullTransactionResponse.json();
+
+      // Invalidate reports and dashboard queries so they refetch fresh data
+      await queryClient.invalidateQueries({ queryKey: ['/api/reports/sales'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/dashboard/metrics'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
 
       // Show receipt
       const receiptData: ReceiptData = {
