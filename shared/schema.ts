@@ -180,16 +180,72 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({
   creditBalance: z.coerce.number().min(0).optional(),
 });
 
-export const insertTransactionSchema = createInsertSchema(transactions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+const baseTransactionSchema = createInsertSchema(transactions)
+  .pick({
+    transactionNumber: true,
+    customerId: true,
+    subtotal: true,
+    tax: true,
+    total: true,
+    paymentMethod: true,
+    paymentStatus: true,
+    synced: true,
+  });
 
-export const insertTransactionItemSchema = createInsertSchema(transactionItems).omit({
-  id: true,
-  createdAt: true,
-});
+export const insertTransactionSchema = z.preprocess(
+  (data: any) => {
+    if (data && typeof data === 'object') {
+      // Remove id if present (shouldn't be in insert)
+      const { id, ...rest } = data;
+      // Convert numeric fields to strings
+      return {
+        ...rest,
+        subtotal: typeof rest.subtotal === 'number' ? String(rest.subtotal) : rest.subtotal,
+        tax: typeof rest.tax === 'number' ? String(rest.tax) : rest.tax,
+        total: typeof rest.total === 'number' ? String(rest.total) : rest.total,
+        customerId: rest.customerId === '' ? null : rest.customerId,
+      };
+    }
+    return data;
+  },
+  baseTransactionSchema.extend({
+    customerId: z.union([
+      z.string().uuid(),
+      z.literal(''),
+      z.null(),
+    ]).transform((val) => val === '' ? null : val).optional(),
+    subtotal: z.string(),
+    tax: z.string(),
+    total: z.string(),
+  })
+);
+
+const baseTransactionItemSchema = createInsertSchema(transactionItems)
+  .omit({
+    id: true,
+    transactionId: true,
+    createdAt: true,
+  });
+
+export const insertTransactionItemSchema = z.preprocess(
+  (data: any) => {
+    if (data && typeof data === 'object') {
+      // Remove id and transactionId if present (shouldn't be in insert)
+      const { id, transactionId, ...rest } = data;
+      // Convert numeric fields to strings
+      return {
+        ...rest,
+        unitPrice: typeof rest.unitPrice === 'number' ? String(rest.unitPrice) : rest.unitPrice,
+        totalPrice: typeof rest.totalPrice === 'number' ? String(rest.totalPrice) : rest.totalPrice,
+      };
+    }
+    return data;
+  },
+  baseTransactionItemSchema.extend({
+    unitPrice: z.string(),
+    totalPrice: z.string(),
+  })
+);
 
 export const insertInventoryMovementSchema = createInsertSchema(inventoryMovements).omit({
   id: true,

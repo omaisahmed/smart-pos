@@ -48,6 +48,7 @@ export default function CartPanel({
   });
 
   const [heldSales, setHeldSales] = useState<any[]>([]);
+  const [taxRate, setTaxRate] = useState<number>(17);
 
   useEffect(() => {
     const loadHeldSales = () => {
@@ -61,10 +62,35 @@ export default function CartPanel({
     loadHeldSales();
   }, []);
 
+  useEffect(() => {
+    const loadTaxRate = () => {
+      try {
+        const settings = localStorage.getItem('settings:store');
+        if (settings) {
+          const parsed = JSON.parse(settings);
+          setTaxRate(parsed.taxRate ?? 17);
+        }
+      } catch (err) {
+        console.error('Failed to load tax rate', err);
+        setTaxRate(17);
+      }
+    };
+    loadTaxRate();
+
+    // Listen for storage changes (updates from settings page)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'settings:store') {
+        loadTaxRate();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const cartSummary: CartSummary = {
     subtotal: items.reduce((sum, item) => sum + item.totalPrice, 0),
-    tax: items.reduce((sum, item) => sum + item.totalPrice, 0) * 0.17,
-    total: items.reduce((sum, item) => sum + item.totalPrice, 0) * 1.17,
+    tax: items.reduce((sum, item) => sum + item.totalPrice, 0) * (taxRate / 100),
+    total: items.reduce((sum, item) => sum + item.totalPrice, 0) * (1 + taxRate / 100),
     itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
   };
 
@@ -177,7 +203,7 @@ export default function CartPanel({
           <span data-testid="text-subtotal">Rs. {cartSummary.subtotal.toLocaleString()}</span>
         </div>
         <div className="flex justify-between mb-2">
-          <span>Tax (17%):</span>
+          <span>Tax ({taxRate}%):</span>
           <span data-testid="text-tax">Rs. {cartSummary.tax.toLocaleString()}</span>
         </div>
         <Separator className="my-2" />

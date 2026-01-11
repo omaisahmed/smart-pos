@@ -11,11 +11,18 @@ export default function Reports() {
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 7);
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   });
   
   const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split('T')[0];
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   });
 
   const { data: salesData = [], isLoading } = useQuery<Transaction[]>({
@@ -24,8 +31,42 @@ export default function Reports() {
   });
 
   const generateReport = () => {
-    // This would typically generate a PDF or Excel report
-    console.log('Generating report for:', { startDate, endDate });
+    if (salesData.length === 0) {
+      alert('No data to export. Please select a date range with transactions.');
+      return;
+    }
+
+    // Create CSV content
+    const headers = ['Transaction ID', 'Date & Time', 'Subtotal', 'Tax', 'Total'];
+    const csvContent = [
+      headers.join(','),
+      ...salesData.map((transaction) => [
+        transaction.transactionNumber,
+        new Date(transaction.createdAt!).toLocaleString(),
+        Number(transaction.subtotal).toLocaleString(),
+        Number(transaction.tax).toLocaleString(),
+        Number(transaction.total).toLocaleString(),
+      ].join(',')),
+      '',
+      'Summary',
+      `Total Sales,${totalSales.toLocaleString()}`,
+      `Total Transactions,${totalTransactions}`,
+      `Average Transaction,${averageTransaction.toLocaleString()}`,
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const fileName = `sales-report-${startDate}-to-${endDate}.csv`;
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const totalSales = salesData.reduce((sum, transaction) => sum + Number(transaction.total), 0);
@@ -72,6 +113,9 @@ export default function Reports() {
               Generate Report
             </Button>
           </div>
+          {/* <div className="mt-3 text-sm text-muted-foreground">
+            Selected period: <span className="font-medium text-foreground">{new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}</span>
+          </div> */}
         </CardContent>
       </Card>
 

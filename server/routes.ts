@@ -297,8 +297,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       transactionData.userId = req.user.id;
       const transaction = await storage.createTransaction(transactionData, items);
       res.status(201).json(transaction);
-    } catch {
-      res.status(400).json({ message: "Failed to create transaction" });
+    } catch (error) {
+      console.error('Transaction creation error:', error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Failed to create transaction", errors: error.errors });
+      } else {
+        res.status(400).json({ message: "Failed to create transaction" });
+      }
     }
   });
 
@@ -335,7 +340,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/reports/sales', isAuthenticated, async (req, res) => {
     try {
       const startDate = new Date(req.query.startDate as string);
+      startDate.setHours(0, 0, 0, 0); // Start of day
+      
       const endDate = new Date(req.query.endDate as string);
+      endDate.setHours(23, 59, 59, 999); // End of day
+      
       const transactions = await storage.getTransactionsByDateRange(startDate, endDate);
       res.json(transactions);
     } catch {

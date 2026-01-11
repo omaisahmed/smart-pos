@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Printer, Mail, X } from 'lucide-react';
 import { ReceiptData } from '@/types/pos';
+import { useState, useEffect } from 'react';
 
 interface ReceiptModalProps {
   receiptData: ReceiptData;
@@ -13,6 +14,35 @@ interface ReceiptModalProps {
 
 export default function ReceiptModal({ receiptData, isOpen, onClose, onPrint }: ReceiptModalProps) {
   const { transaction, storeName, storeAddress, storePhone, gstNumber, cashierName } = receiptData;
+  const [taxRate, setTaxRate] = useState<number>(17);
+  const [recalculatedTax, setRecalculatedTax] = useState<number>(0);
+  const [recalculatedTotal, setRecalculatedTotal] = useState<number>(0);
+
+  useEffect(() => {
+    // Load the current tax rate from settings
+    const loadTaxRate = () => {
+      try {
+        const settings = localStorage.getItem('settings:store');
+        if (settings) {
+          const parsed = JSON.parse(settings);
+          const newTaxRate = parsed.taxRate ?? 17;
+          setTaxRate(newTaxRate);
+          
+          // Recalculate tax and total based on current tax rate
+          const subtotal = Number(transaction.subtotal) || 0;
+          const tax = subtotal * (newTaxRate / 100);
+          const total = subtotal * (1 + newTaxRate / 100);
+          
+          setRecalculatedTax(tax);
+          setRecalculatedTotal(total);
+        }
+      } catch (err) {
+        console.error('Failed to load tax rate', err);
+        setTaxRate(17);
+      }
+    };
+    loadTaxRate();
+  }, [isOpen, transaction]);
 
   const handlePrint = () => {
     window.print();
@@ -152,15 +182,15 @@ export default function ReceiptModal({ receiptData, isOpen, onClose, onPrint }: 
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Tax (17%):</span>
+              <span>Tax ({taxRate}%):</span>
               <span data-testid="text-receipt-tax">
-                Rs. {Number(transaction.tax).toLocaleString()}
+                Rs. {recalculatedTax.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between font-bold text-base">
               <span>TOTAL:</span>
               <span data-testid="text-receipt-total">
-                Rs. {Number(transaction.total).toLocaleString()}
+                Rs. {recalculatedTotal.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between mt-1">

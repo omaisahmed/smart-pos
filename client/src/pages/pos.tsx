@@ -77,7 +77,7 @@ export default function POS() {
   const processPayment = async (paymentMethod: string, customerId?: string) => {
     if (cartItems.length === 0) return;
 
-    const customerIdToSend = selectedCustomer === 'walk-in' ? null : selectedCustomer;
+    const customerIdToSend = (selectedCustomer === 'walk-in' || selectedCustomer === '') ? null : selectedCustomer;
 
     // Save transaction to database
     const transactionData = {
@@ -99,40 +99,32 @@ export default function POS() {
     }));
 
     try {
-      await apiRequest('POST', '/api/transactions', { transaction: transactionData, items: itemsData });
+      const response = await apiRequest('POST', '/api/transactions', { transaction: transactionData, items: itemsData });
+      const savedTransaction = await response.json();
+      
+      // Fetch the full transaction with items and product details
+      const fullTransactionResponse = await fetch(`/api/transactions/${savedTransaction.id}`, {
+        credentials: 'include',
+      });
+      const fullTransaction = await fullTransactionResponse.json();
+
+      // Show receipt
+      const receiptData: ReceiptData = {
+        transaction: fullTransaction,
+        storeName: 'Smart POS Store',
+        storeAddress: '123 Main Street, Karachi',
+        storePhone: '+92-300-1234567',
+        gstNumber: '123456789',
+        cashierName: 'Current User'
+      };
+
+      setReceiptData(receiptData);
+      setShowReceipt(true);
+      // Don't clear cart here
     } catch (err) {
       console.error('Failed to save transaction', err);
       // TODO: handle error
     }
-
-    // Show receipt
-    const mockReceiptData: ReceiptData = {
-      transaction: {
-        ...transactionData,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        items: cartItems.map(item => ({
-          id: crypto.randomUUID(),
-          transactionId: crypto.randomUUID(),
-          productId: item.product.id,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice.toString(),
-          totalPrice: item.totalPrice.toString(),
-          createdAt: new Date(),
-          product: item.product
-        }))
-      },
-      storeName: 'Smart POS Store',
-      storeAddress: '123 Main Street, Karachi',
-      storePhone: '+92-300-1234567',
-      gstNumber: '123456789',
-      cashierName: 'Current User'
-    };
-
-    setReceiptData(mockReceiptData);
-    setShowReceipt(true);
-    // Don't clear cart here
   };
 
   return (

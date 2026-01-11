@@ -24,9 +24,9 @@ export default function Login() {
         credentials: "include",
       });
       if (res.ok) {
-        // refresh auth information before navigating so protected routes render correctly
+        // Invalidate and wait for the query to refetch auth data before navigating
         try {
-          await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+          await queryClient.refetchQueries({ queryKey: ['/api/auth/user'] });
         } catch (_) {}
         navigate("/dashboard");
       } else {
